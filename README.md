@@ -1,4 +1,4 @@
-O CalpBird é um projeto inovador desenvolvido para dispositivos Wear OS, permitindo que os jogadores controlem um clone do Flappy Bird em um 
+O ClapBird é um projeto inovador desenvolvido para dispositivos Wear OS, permitindo que os jogadores controlem um clone do Flappy Bird em um 
 ambiente de realidade virtual (VR) utilizando um Google Cardboard e um smartwatch como controle.
 
 🎮 Como Funciona?
