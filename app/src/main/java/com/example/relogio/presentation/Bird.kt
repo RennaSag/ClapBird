@@ -12,8 +12,8 @@ class Bird {
 
         // Calcular a rotação com base na velocidade
         rotation = when {
-            velocity < 0 -> -20f  // Apontando para cima quando subindo
-            velocity > 10 -> 70f  // Apontando para baixo quando caindo rápido
+            velocity < 0 -> -10f  // Apontando para cima quando subindo
+            velocity > 10 -> 40f  // Apontando para baixo quando caindo rápido
             else -> velocity * 5f  // Rotação suave entre subida e descida
         }
     }
@@ -36,6 +36,6 @@ class Bird {
 
     companion object {
         const val GRAVITY = 1
-        const val FLAP_STRENGTH = 12  // Reduzido para controle mais preciso em tela pequena
+        const val FLAP_STRENGTH = 8  // Reduzido para controle mais preciso em tela pequena
     }
 }

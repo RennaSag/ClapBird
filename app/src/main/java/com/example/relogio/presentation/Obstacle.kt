@@ -1,41 +1,66 @@
 package com.example.relogio.presentation
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.graphics.Paint
+import com.example.relogio.R
 
-class Obstacle(var x: Int, var gapY: Int) {
-    val width: Int = 70  // Reduzido para melhor visualização em telas pequenas
-    val gapHeight: Int = 200  // Reduzido para aumentar a dificuldade
+class Obstacle(
+    var x: Int,
+    var gapY: Int,
+    context: Context  // Adicionar context como parâmetro
+) {
+    val width: Int = 70
+    val gapHeight: Int = 160    //espaço entre os dois canos, mais apertado ou mais largo
     var passed: Boolean = false
 
+    // Adicionar os bitmaps para os canos
+    private val pipeBitmap: Bitmap
+    private val pipeTopBitmap: Bitmap  // Bitmap para o topo do cano
+    private val pipeBottomBitmap: Bitmap  // Bitmap para o cano inferior
+    private val matrix = Matrix()
+
+    init {
+        // Carregar a imagem do cano
+        val originalBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.cano)
+
+        // Redimensionar para a largura desejada, preservando proporção
+        val scale = width.toFloat() / originalBitmap.width
+        val newHeight = (originalBitmap.height * scale).toInt()
+
+        // Bitmap para o cano normal
+        pipeBitmap = Bitmap.createScaledBitmap(originalBitmap, width, newHeight, true)
+
+        // Criar as versões dos canos superior e inferior
+        // Para o cano superior, invertemos a imagem verticalmente
+        matrix.setScale(1f, -1f)
+        pipeTopBitmap = Bitmap.createBitmap(pipeBitmap, 0, 0,
+            pipeBitmap.width, pipeBitmap.height, matrix, true)
+
+        // O cano inferior permanece normal
+        pipeBottomBitmap = pipeBitmap
+    }
+
     fun update() {
-        x -= 5  // Velocidade aumentada para melhor fluidez em telas pequenas
+        x -= 5
     }
 
     fun draw(canvas: Canvas, paint: Paint) {
-        // Salvar a cor original da paint
-        val originalColor = paint.color
-
-        // Definir a cor para verde para os obstáculos
-        paint.color = android.graphics.Color.GREEN
-
-        // Desenhar o cano superior
-        canvas.drawRect(x.toFloat(), 0f, (x + width).toFloat(), gapY.toFloat(), paint)
+        // Desenhar o cano superior (invertido)
+        val topPipeBottom = gapY
+        canvas.drawBitmap(pipeTopBitmap, x.toFloat(),
+            (gapY - pipeTopBitmap.height).toFloat(), paint)
 
         // Desenhar o cano inferior
-        canvas.drawRect(
-            x.toFloat(),
-            (gapY + gapHeight).toFloat(),
-            (x + width).toFloat(),
-            canvas.height.toFloat(),
-            paint
-        )
-
-        // Restaurar a cor original da paint
-        paint.color = originalColor
+        val bottomPipeTop = gapY + gapHeight
+        canvas.drawBitmap(pipeBottomBitmap, x.toFloat(),
+            (gapY + gapHeight).toFloat(), paint)
     }
 
-    // Verifica se o pássaro colidiu com este obstáculo
+    // Método de colisão superioir e  inferior
     fun checkCollision(birdX: Int, birdY: Int, birdSize: Int): Boolean {
         val birdRadius = birdSize / 2
 

@@ -14,6 +14,7 @@ import com.example.relogio.R
 
 class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Callback {
 
+    private val context: Context = context  // Armazenar o contexto como um campo da classe
     private lateinit var birdBitmap: Bitmap
     private val matrix = Matrix()  // Para rotacionar o pássaro
 
@@ -36,8 +37,8 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         // Carregar a imagem do pássaro
         try {
             birdBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.bird)
-            // Redimensionar o bitmap para tamanho adequado à tela do relógio
-            birdBitmap = Bitmap.createScaledBitmap(birdBitmap, 40, 40, true)
+            // Redimensionar o bitmap para tamanho adequado à tela do relógio, tamanho do passarinho. largura-altura
+            birdBitmap = Bitmap.createScaledBitmap(birdBitmap, 70, 50, true)
             Log.d("GameEngine", "Bird bitmap loaded successfully")
         } catch (e: Exception) {
             Log.e("GameEngine", "Error loading bird bitmap: ${e.message}")
@@ -116,9 +117,19 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
 
             // Adicionar novos obstáculos
             if (obstacles.isEmpty() || obstacles.last().x < screenWidth - 300) {
-                val minGap = (screenHeight * 0.2).toInt()
-                val maxGap = (screenHeight * 0.6).toInt()
-                obstacles.add(Obstacle(screenWidth, (minGap..maxGap).random()))
+                // Dividir a tela em 5 regiões
+                val regionHeight = screenHeight / 5
+
+                // Escolher aleatoriamente uma das 5 regiões
+                val region = (0..4).random()
+
+                // Calcular uma posição aleatória dentro da região escolhida
+                val gapY = region * regionHeight + (0..regionHeight).random()
+
+                // Certificar-se de que há espaço suficiente para o gap e o pássaro
+                val safeGapY = gapY.coerceIn(50, screenHeight - 50 - 200)
+
+                obstacles.add(Obstacle(screenWidth, safeGapY, context))
             }
 
             // Verificar se o pássaro ultrapassou um obstáculo
@@ -192,11 +203,11 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
             paint.color = Color.RED
             paint.textAlign = Paint.Align.CENTER
             paint.textSize = 30f
-            canvas.drawText("Game Over", screenWidth / 2f, screenHeight / 2f - 20f, paint)
+            canvas.drawText("Perdeu, buxa demais", screenWidth / 2f, screenHeight / 2f - 20f, paint)
 
             paint.color = Color.WHITE
             paint.textSize = 20f
-            canvas.drawText("Toque para reiniciar", screenWidth / 2f, screenHeight / 2f + 20f, paint)
+            canvas.drawText("Aperta o pulso pra reiniciar", screenWidth / 2f, screenHeight / 2f + 20f, paint)
         }
     }
 
