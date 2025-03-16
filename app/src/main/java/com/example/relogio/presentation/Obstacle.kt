@@ -9,7 +9,7 @@ class Obstacle(var x: Int, var gapY: Int) {
     var passed: Boolean = false
 
     fun update() {
-        x -= 3 // Velocidade dos obstáculos (ajuste conforme necessário)
+        x -= 3 // Velocidade dos obstáculos (ajuste conforme necessário)sdfsf
     }
 
     fun draw(canvas: Canvas, paint: Paint) {
