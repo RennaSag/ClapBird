@@ -1,4 +1,4 @@
-O FelpBird é um projeto inovador desenvolvido para dispositivos Wear OS, permitindo que os jogadores controlem um clone do Flappy Bird em um 
+O CalpBird é um projeto inovador desenvolvido para dispositivos Wear OS, permitindo que os jogadores controlem um clone do Flappy Bird em um 
 ambiente de realidade virtual (VR) utilizando um Google Cardboard e um smartwatch como controle.
 
 🎮 Como Funciona?
@@ -12,4 +12,4 @@ A comunicação entre o smartwatch e o smartphone é feita via Bluetooth.
 ✅ Bluetooth API – Comunicação entre smartwatch e smartphone
 
 🛠️ Objetivo do Projeto
-O FelpBird explora a interatividade entre dispositivos vestíveis (wearables) e realidade virtual, criando uma experiência de jogo única e inovadora.
+O ClapBird explora a interatividade entre dispositivos vestíveis (wearables) e realidade virtual, criando uma experiência de jogo única e inovadora.
