@@ -12,4 +12,5 @@ A comunicação entre o smartwatch e o smartphone é feita via Bluetooth.
 ✅ Bluetooth API – Comunicação entre smartwatch e smartphone
 
 🛠️ Objetivo do Projeto
-O ClapBird explora a interatividade entre dispositivos vestíveis (wearables) e realidade virtual, criando uma experiência de jogo única e inovadora.
+O ClapBird explora a interatividade entre dispositivos vestíveis (wearables) e 
+realidade virtual, criando uma experiência de jogo única e inovadora.
