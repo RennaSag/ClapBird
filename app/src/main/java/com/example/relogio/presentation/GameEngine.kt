@@ -18,6 +18,11 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
     private lateinit var birdBitmap: Bitmap
     private val matrix = Matrix()  // Para rotacionar o pássaro
 
+    // Adicionar campos para o fundo
+    private lateinit var backgroundBitmap: Bitmap
+    private var backgroundX: Float = 0f  // Posição X do fundo
+    private val BACKGROUND_SPEED = 1f    // Velocidade do fundo (mais lenta que os canos)
+
     private val holder: SurfaceHolder = surfaceView.holder
     val bird: Bird = Bird()
     private val obstacles: MutableList<Obstacle> = mutableListOf()
@@ -37,13 +42,25 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         // Carregar a imagem do pássaro
         try {
             birdBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.bird)
-            // Redimensionar o bitmap para tamanho adequado à tela do relógio, tamanho do passarinho. largura-altura
-            birdBitmap = Bitmap.createScaledBitmap(birdBitmap, 70, 50, true)
+            // Redimensionar o bitmap para tamanho adequado à tela do relógio
+            birdBitmap = Bitmap.createScaledBitmap(birdBitmap, 40, 40, true)
             Log.d("GameEngine", "Bird bitmap loaded successfully")
         } catch (e: Exception) {
             Log.e("GameEngine", "Error loading bird bitmap: ${e.message}")
             // Caso haja erro, criar um bitmap vazio
             birdBitmap = Bitmap.createBitmap(40, 40, Bitmap.Config.ARGB_8888)
+        }
+
+        // Carregar imagem do fundo
+        try {
+            val originalBg = BitmapFactory.decodeResource(context.resources, R.drawable.fundo)
+            // Criar uma versão temporária, será redimensionada corretamente em surfaceCreated
+            backgroundBitmap = originalBg
+            Log.d("GameEngine", "Background loaded successfully")
+        } catch (e: Exception) {
+            Log.e("GameEngine", "Error loading background: ${e.message}")
+            // Criar um bitmap vazio caso falhe o carregamento
+            backgroundBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
         }
     }
 
@@ -59,6 +76,19 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         // Posicionar o pássaro
         bird.x = screenWidth / 4
         bird.y = screenHeight / 4
+
+        // Recarregar/redimensionar o fundo após conhecer as dimensões da tela
+        try {
+            val originalBg = BitmapFactory.decodeResource(context.resources, R.drawable.fundo)
+            backgroundBitmap = Bitmap.createScaledBitmap(
+                originalBg,
+                (originalBg.width * (screenHeight.toFloat() / originalBg.height)).toInt(),
+                screenHeight,
+                true
+            )
+        } catch (e: Exception) {
+            Log.e("GameEngine", "Error resizing background: ${e.message}")
+        }
 
         // Iniciar o thread de renderização imediatamente
         gameRunning = true
@@ -81,6 +111,7 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         gameOver = false
         score = 0
         obstacles.clear()
+        backgroundX = 0f  // Resetar a posição do fundo
     }
 
     private fun stopGame() {
@@ -109,6 +140,14 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
 
     private fun update() {
         if (gameStarted && !gameOver) {
+            // Atualizar a posição do fundo (paralaxe)
+            backgroundX -= BACKGROUND_SPEED
+
+            // Resetar a posição do fundo quando ele sair da tela completamente
+            if (backgroundX <= -backgroundBitmap.width) {
+                backgroundX = 0f
+            }
+
             bird.update()
             // Limitar o pássaro à tela
             bird.constrain(0, screenHeight - birdBitmap.height)
@@ -117,19 +156,13 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
 
             // Adicionar novos obstáculos
             if (obstacles.isEmpty() || obstacles.last().x < screenWidth - 300) {
-                // Dividir a tela em 5 regiões
-                val regionHeight = screenHeight / 5
+                // Configurações do posicionamento dos obstáculos na tela
+                val minGap = (screenHeight * 0.10).toInt()
+                val maxGap = (screenHeight * 0.30).toInt()
 
-                // Escolher aleatoriamente uma das 5 regiões
-                val region = (0..4).random()
-
-                // Calcular uma posição aleatória dentro da região escolhida
-                val gapY = region * regionHeight + (0..regionHeight).random()
-
-                // Certificar-se de que há espaço suficiente para o gap e o pássaro
-                val safeGapY = gapY.coerceIn(50, screenHeight - 50 - 200)
-
-                obstacles.add(Obstacle(screenWidth, safeGapY, context))
+                // Criar um valor mais aleatório para a posição
+                val randomPosition = (minGap..maxGap).random()
+                obstacles.add(Obstacle(screenWidth, randomPosition, context))
             }
 
             // Verificar se o pássaro ultrapassou um obstáculo
@@ -164,8 +197,15 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
     }
 
     private fun draw(canvas: Canvas) {
-        // Limpar a tela com fundo preto
-        canvas.drawColor(Color.BLACK)
+        // Desenhar o fundo (substituindo o canvas.drawColor(Color.BLACK))
+
+        // Desenhar o fundo (possivelmente precisando de duas imagens para rolagem contínua)
+        canvas.drawBitmap(backgroundBitmap, backgroundX, 0f, paint)
+
+        // Desenhar uma segunda cópia do fundo para rolagem contínua
+        if (backgroundX < 0) {
+            canvas.drawBitmap(backgroundBitmap, backgroundX + backgroundBitmap.width, 0f, paint)
+        }
 
         // Desenhar os obstáculos
         obstacles.forEach { it.draw(canvas, paint) }
@@ -203,11 +243,11 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
             paint.color = Color.RED
             paint.textAlign = Paint.Align.CENTER
             paint.textSize = 30f
-            canvas.drawText("Perdeu, buxa demais", screenWidth / 2f, screenHeight / 2f - 20f, paint)
+            canvas.drawText("Game Over", screenWidth / 2f, screenHeight / 2f - 20f, paint)
 
             paint.color = Color.WHITE
             paint.textSize = 20f
-            canvas.drawText("Aperta o pulso pra reiniciar", screenWidth / 2f, screenHeight / 2f + 20f, paint)
+            canvas.drawText("Toque para reiniciar", screenWidth / 2f, screenHeight / 2f + 20f, paint)
         }
     }
 
@@ -232,6 +272,7 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         score = 0
         gameOver = false
         gameStarted = true
+        backgroundX = 0f  // Resetar a posição do fundo
     }
 
     // Extensão para gerar números aleatórios dentro de um range
