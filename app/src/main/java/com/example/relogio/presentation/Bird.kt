@@ -1,14 +1,14 @@
 package com.example.relogio.presentation
 
 class Bird {
-    var x: Int = 0  // Será sobrescrito no surfaceCreated
-    var y: Int = 0  // Será sobrescrito no surfaceCreated
-    var velocity: Int = 0
+    var x: Float = 0f  // Será sobrescrito no surfaceCreated
+    var y: Float = 0f  // Será sobrescrito no surfaceCreated
+    var velocity: Float = 0f
     var rotation: Float = 0f  // Adiciona rotação para animação do pássaro
 
     fun update() {
-        velocity += GRAVITY
-        y += velocity
+        velocity += GRAVITY  // Usando FLOAT para gravidade
+        y += velocity  // Atualiza a posição do pássaro com base na velocidade
 
         // Calcular a rotação com base na velocidade
         rotation = when {
@@ -19,23 +19,23 @@ class Bird {
     }
 
     fun flap() {
-        velocity = -FLAP_STRENGTH
+        velocity = -FLAP_STRENGTH  // A força do flap é negativa para subir
     }
 
     // Método para limitar a posição do pássaro à tela
     fun constrain(minY: Int, maxY: Int) {
         if (y < minY) {
-            y = minY
-            velocity = 0
+            y = minY.toFloat()
+            velocity = 0f  // Reseta a velocidade quando chega ao limite inferior
         }
         if (y > maxY) {
-            y = maxY
-            velocity = 0
+            y = maxY.toFloat()
+            velocity = 0f  // Reseta a velocidade quando chega ao limite superior
         }
     }
 
     companion object {
-        const val GRAVITY = 1
-        const val FLAP_STRENGTH = 8  // Reduzido para controle mais preciso em tela pequena
+        const val GRAVITY: Float = 0.7f  // Gravidade ajustada para Float
+        const val FLAP_STRENGTH: Float = 9f  // Força do flap ajustada para Float
     }
 }

@@ -1,5 +1,6 @@
 package com.example.relogio.presentation
 
+import SoundPlayer
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -17,6 +18,9 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
     private val context: Context = context  // Armazenar o contexto como um campo da classe
     private lateinit var birdBitmap: Bitmap
     private val matrix = Matrix()  // Para rotacionar o pássaro
+
+    // Adiciona o SoundPlayer
+    private val soundPlayer = SoundPlayer(context)
 
     // Adicionar campos para o fundo
     private lateinit var backgroundBitmap: Bitmap
@@ -74,8 +78,8 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         Log.d("GameEngine", "Surface created: width=$screenWidth, height=$screenHeight")
 
         // Posicionar o pássaro
-        bird.x = screenWidth / 4
-        bird.y = screenHeight / 4
+        bird.x = (screenWidth / 4).toFloat()
+        bird.y = (screenHeight / 4).toFloat()
 
         // Recarregar/redimensionar o fundo após conhecer as dimensões da tela
         try {
@@ -116,6 +120,8 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
 
     private fun stopGame() {
         gameRunning = false
+        soundPlayer.release()  // Liberar recursos de som
+
         try {
             gameThread.join()
         } catch (e: InterruptedException) {
@@ -170,6 +176,7 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
                 if (obstacle.x + obstacle.width < bird.x && !obstacle.passed) {
                     obstacle.passed = true
                     score++
+                    soundPlayer.playScoreSound()  // Som de pontuação
                 }
             }
 
@@ -185,12 +192,16 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         // Verificar colisão com o chão ou teto
         if (bird.y <= 0 || bird.y >= screenHeight - birdBitmap.height) {
             gameOver = true
+            soundPlayer.playDeathSound()  // Morte som
         }
 
         // Verificar colisão com obstáculos
         for (obstacle in obstacles) {
             if (obstacle.checkCollision(bird.x + birdBitmap.width/2, bird.y + birdBitmap.height/2, birdBitmap.width)) {
                 gameOver = true
+
+                soundPlayer.playDeathSound()  // Morte som
+
                 break
             }
         }
@@ -259,6 +270,9 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         } else if (!gameStarted) {
             // Iniciar o jogo
             startGame()
+        } else {
+            // Som a cada 'flap' (somente se o jogo estiver rodando)
+            soundPlayer.playJumpSound()
         }
 
         // Fazer o pássaro pular
@@ -266,8 +280,8 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
     }
 
     private fun resetGame() {
-        bird.y = screenHeight / 4
-        bird.velocity = 0
+        bird.y = (screenHeight / 4).toFloat()
+        bird.velocity = 0F
         obstacles.clear()
         score = 0
         gameOver = false

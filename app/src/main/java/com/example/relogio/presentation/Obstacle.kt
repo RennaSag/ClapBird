@@ -61,7 +61,7 @@ class Obstacle(
     }
 
     // Método de colisão superioir e  inferior
-    fun checkCollision(birdX: Int, birdY: Int, birdSize: Int): Boolean {
+    fun checkCollision(birdX: Float, birdY: Float, birdSize: Int): Boolean {
         val birdRadius = birdSize / 2
 
         // Colisão com o cano superior
