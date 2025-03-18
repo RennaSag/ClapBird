@@ -37,6 +37,7 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
     private var screenWidth: Int = 0
     private var screenHeight: Int = 0
     private var gameOver: Boolean = false
+    private var isTouching: Boolean = false
 
     init {
         holder.addCallback(this)
@@ -106,8 +107,12 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
-        Log.d("GameEngine", "Surface destroyed")
-        stopGame()
+        gameRunning = false
+        try {
+            gameThread.join()
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
     }
 
     private fun startGame() {
@@ -154,19 +159,26 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
                 backgroundX = 0f
             }
 
-            bird.update()
+            // Atualizar a velocidade do pássaro com base no estado do toque
+            if (isTouching) {
+                bird.velocity = -Bird.FLAP_STRENGTH // Subir enquanto o toque estiver pressionado
+            } else {
+                bird.velocity += Bird.GRAVITY // Cair quando o toque não estiver pressionado
+            }
+
+            // Atualizar a posição do pássaro
+            bird.y += bird.velocity
+
             // Limitar o pássaro à tela
             bird.constrain(0, screenHeight - birdBitmap.height)
 
+            // Atualizar obstáculos e verificar colisões
             obstacles.forEach { it.update() }
 
             // Adicionar novos obstáculos
             if (obstacles.isEmpty() || obstacles.last().x < screenWidth - 300) {
-                // Configurações do posicionamento dos obstáculos na tela
                 val minGap = (screenHeight * 0.10).toInt()
                 val maxGap = (screenHeight * 0.30).toInt()
-
-                // Criar um valor mais aleatório para a posição
                 val randomPosition = (minGap..maxGap).random()
                 obstacles.add(Obstacle(screenWidth, randomPosition, context))
             }
@@ -176,7 +188,7 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
                 if (obstacle.x + obstacle.width < bird.x && !obstacle.passed) {
                     obstacle.passed = true
                     score++
-                    soundPlayer.playScoreSound()  // Som de pontuação
+                    soundPlayer.playScoreSound()
                 }
             }
 
@@ -208,12 +220,8 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
     }
 
     private fun draw(canvas: Canvas) {
-        // Desenhar o fundo (substituindo o canvas.drawColor(Color.BLACK))
-
-        // Desenhar o fundo (possivelmente precisando de duas imagens para rolagem contínua)
+        // Desenhar o fundo
         canvas.drawBitmap(backgroundBitmap, backgroundX, 0f, paint)
-
-        // Desenhar uma segunda cópia do fundo para rolagem contínua
         if (backgroundX < 0) {
             canvas.drawBitmap(backgroundBitmap, backgroundX + backgroundBitmap.width, 0f, paint)
         }
@@ -224,8 +232,7 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         // Desenhar o pássaro com rotação
         matrix.reset()
         matrix.postTranslate(bird.x.toFloat(), bird.y.toFloat())
-        matrix.postRotate(bird.rotation, bird.x.toFloat() + birdBitmap.width/2,
-            bird.y.toFloat() + birdBitmap.height/2)
+        matrix.postRotate(bird.rotation, bird.x.toFloat() + birdBitmap.width / 2, bird.y.toFloat() + birdBitmap.height / 2)
         canvas.drawBitmap(birdBitmap, matrix, paint)
 
         // Desenhar a pontuação
@@ -236,10 +243,8 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
 
         // Mostrar mensagem de "Toque para começar" se o jogo não tiver começado
         if (!gameStarted) {
-            // Desenhar um retângulo semitransparente para destacar o texto
             paint.color = Color.argb(128, 0, 0, 0)
-            canvas.drawRect(0f, screenHeight/2 - 60f, screenWidth.toFloat(), screenHeight/2 + 30f, paint)
-
+            canvas.drawRect(0f, screenHeight / 2 - 60f, screenWidth.toFloat(), screenHeight / 2 + 30f, paint)
             paint.color = Color.YELLOW
             paint.textAlign = Paint.Align.CENTER
             paint.textSize = 25f
@@ -249,20 +254,19 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         // Mostrar mensagem de "Game Over" se o jogo acabou
         if (gameOver) {
             paint.color = Color.argb(128, 0, 0, 0)
-            canvas.drawRect(0f, screenHeight/2 - 60f, screenWidth.toFloat(), screenHeight/2 + 60f, paint)
-
+            canvas.drawRect(0f, screenHeight / 2 - 60f, screenWidth.toFloat(), screenHeight / 2 + 60f, paint)
             paint.color = Color.RED
             paint.textAlign = Paint.Align.CENTER
             paint.textSize = 30f
             canvas.drawText("Game Over", screenWidth / 2f, screenHeight / 2f - 20f, paint)
-
             paint.color = Color.WHITE
             paint.textSize = 20f
             canvas.drawText("Toque para reiniciar", screenWidth / 2f, screenHeight / 2f + 20f, paint)
         }
     }
 
-    // Método para fazer o pássaro bater as asas
+
+
     fun flapBird() {
         if (gameOver) {
             // Reiniciar o jogo
@@ -270,13 +274,16 @@ class GameEngine(context: Context, surfaceView: SurfaceView) : SurfaceHolder.Cal
         } else if (!gameStarted) {
             // Iniciar o jogo
             startGame()
-        } else {
-            // Som a cada 'flap' (somente se o jogo estiver rodando)
-            soundPlayer.playJumpSound()
         }
+    }
 
-        // Fazer o pássaro pular
-        bird.flap()
+    fun startFlap() {
+        isTouching = true
+        soundPlayer.playJumpSound()
+    }
+
+    fun stopFlap() {
+        isTouching = false
     }
 
     private fun resetGame() {
