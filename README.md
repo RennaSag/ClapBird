@@ -14,3 +14,5 @@ A comunicação entre o smartwatch e o smartphone é feita via Bluetooth.
 🛠️ Objetivo do Projeto
 O ClapBird explora a interatividade entre dispositivos vestíveis (wearables) e 
 realidade virtual, criando uma experiência de jogo única e inovadora.
+
+Projeto cancelado devido a dificuldades logísticas da equipe.
